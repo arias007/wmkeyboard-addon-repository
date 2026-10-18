@@ -3,10 +3,10 @@
   "version": 1,
   "id": "com.wasimaster.todo",
   "name": "Todo List",
-  "pluginVersion": "1.0.0",
+  "pluginVersion": "2.0.0",
   "author": "Wasi Master",
-  "description": "A checklist that remembers itself. Shows how plugin storage works.",
-  "apiVersion": 1,
+  "description": "A checklist with due dates and reminders. Shows how plugin storage, reminders and the date widget work.",
+  "apiVersion": 2,
   "entry": "main.lua",
-  "permissions": ["storage"]
+  "permissions": ["storage", "reminders"]
 }

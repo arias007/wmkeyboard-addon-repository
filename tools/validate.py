@@ -51,7 +51,7 @@ EXECUTABLE_TYPES = {"plugin"}
 
 # Mirrors PluginPermission.kt. A permission the app does not recognise makes
 # it refuse the install outright, so publishing one ships a dead plugin.
-KNOWN_PLUGIN_PERMISSIONS = {"storage"}
+KNOWN_PLUGIN_PERMISSIONS = {"storage", "reminders"}
 
 
 def check_plugin(ident, payload, errors, warnings):
@@ -92,7 +92,9 @@ def check_plugin(ident, payload, errors, warnings):
             f"{ident}: plugin id {plugin_id!r} must be lowercase, 3-64 characters, "
             f"and only letters, numbers, dots, dashes and underscores"
         )
-    if manifest.get("apiVersion", 1) > 1:
+    # The app's PluginManifestCodec.API_VERSION. 2 added wm.reminders, ui.date
+    # and os.time(table).
+    if manifest.get("apiVersion", 1) > 2:
         warnings.append(
             f"{ident}: apiVersion {manifest['apiVersion']} is newer than this "
             f"validator knows — current app versions will refuse it"

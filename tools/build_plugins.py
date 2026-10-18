@@ -35,7 +35,7 @@ FORMAT = "wmkeyboard-plugin"
 
 # Mirrors PluginPermission.kt. A permission the app does not know refuses the
 # install outright, so publishing one would ship a plugin nobody can use.
-KNOWN_PERMISSIONS = {"storage"}
+KNOWN_PERMISSIONS = {"storage", "reminders"}
 
 
 def build(source: Path) -> tuple[bytes, list[str]]:
