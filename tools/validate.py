@@ -6,7 +6,8 @@ Two passes:
 1. The JSON Schema at ``docs/addons/wmkeyboard-repo.schema.json`` (draft 2020-12).
 2. The things a schema cannot express — that every ``path``, ``previews[]``,
    ``licenseFile`` and ``repo.icon`` resolves to a file that is actually here,
-   that ids are unique, and that any checksum present is correct.
+   that ids are unique, that any checksum present is correct, and that each
+   ``localizations[]`` item is one the app will actually keep.
 
 ``sha256`` and ``sizeBytes`` are **optional**. A manifest without them is valid
 and installs fine; they are only checked when a publisher chose to provide them.
@@ -52,6 +53,21 @@ EXECUTABLE_TYPES = {"plugin"}
 # Mirrors PluginPermission.kt. A permission the app does not recognise makes
 # it refuse the install outright, so publishing one ships a dead plugin.
 KNOWN_PLUGIN_PERMISSIONS = {"storage", "reminders"}
+
+# The types whose payload is in one language, and so can carry `localizations`.
+LOCALIZABLE_TYPES = {"dictionary", "emoji_keywords", "vocabulary"}
+
+# Mirrors AddonRepoCodec: a registered language id, optionally a hyphen and a
+# region (es, es-419, pt-BR). The app drops anything else.
+LOCALE_PATTERN = re.compile(r"[a-z]{2,3}(_[a-z0-9]+)*(-[A-Za-z0-9]{2,8})?")
+
+LANG_IDS_FILE = ROOT / "tools" / "lang_ids.txt"
+
+
+def known_lang_ids() -> set[str]:
+    """The app's registered language ids, from the snapshot in tools/lang_ids.txt."""
+    lines = LANG_IDS_FILE.read_text(encoding="utf-8").splitlines()
+    return {line.strip() for line in lines if line.strip() and not line.startswith("#")}
 
 
 def check_plugin(ident, payload, errors, warnings):
@@ -135,6 +151,77 @@ def check_asset(field: str, value: str, errors: list[str], warnings: list[str]) 
         errors.append(f"{field}: no such file ({value})")
         return None
     return target
+
+
+def check_payload_checksums(
+    ident: str, payload: Path, holder: dict, errors: list[str], warnings: list[str]
+) -> None:
+    """Compare a declared sizeBytes/sha256 (on an entry or a localization) with the file."""
+    declared_size = holder.get("sizeBytes")
+    actual_size = payload.stat().st_size
+    if declared_size is not None and declared_size != actual_size:
+        errors.append(f"{ident}: sizeBytes says {declared_size}, file is {actual_size}")
+
+    declared_hash = holder.get("sha256")
+    if declared_hash is not None:
+        actual_hash = sha256_of(payload)
+        if declared_hash != actual_hash:
+            errors.append(
+                f"{ident}: sha256 mismatch\n"
+                f"    declared {declared_hash}\n"
+                f"    actual   {actual_hash}"
+            )
+
+    if declared_hash is None and declared_size is None:
+        warnings.append(
+            f"{ident}: no sha256/sizeBytes — valid, but the app will show it "
+            f"as unverified (run tools/build_index.py to fill them in)"
+        )
+
+
+def check_localizations(
+    ident: str, entry: dict, lang_ids: set[str], errors: list[str], warnings: list[str]
+) -> None:
+    """Check what the app's codec would silently drop, so it fails here instead."""
+    localizations = entry.get("localizations")
+    if not localizations:
+        return
+    kind = entry.get("type", "")
+    if kind not in LOCALIZABLE_TYPES:
+        warnings.append(f"{ident}: localizations are ignored for type {kind}")
+        return
+
+    base = entry.get("langId", "")
+    seen: set[str] = set()
+    for index, item in enumerate(localizations):
+        locale = item.get("locale", "")
+        where = f"{ident}@{locale or index}"
+        if not LOCALE_PATTERN.fullmatch(locale):
+            errors.append(f"{where}: malformed locale {locale!r} — the app drops it")
+            continue
+        language = locale.split("-", 1)[0]
+        if language not in lang_ids:
+            errors.append(
+                f"{where}: {language!r} is not a language the app registers "
+                f"(tools/lang_ids.txt)"
+            )
+        if locale == base:
+            errors.append(f"{where}: repeats the entry's own langId — the app drops it")
+        if locale in seen:
+            errors.append(f"{where}: duplicate locale — the app keeps only the first")
+        seen.add(locale)
+
+        path = item.get("path", "")
+        if not path:
+            errors.append(f"{where}: no path — the app drops it")
+            continue
+        payload = check_asset(f"{where}.path", path, errors, warnings)
+        suffix = EXPECTED_SUFFIX.get(kind)
+        if suffix and not is_remote(path) and not path.endswith(suffix):
+            expected = suffix if isinstance(suffix, str) else " or ".join(suffix)
+            warnings.append(f"{where}: type {kind} usually ends in {expected} — got {path}")
+        if payload is not None:
+            check_payload_checksums(where, payload, item, errors, warnings)
 
 
 def check_icon_pack(ident: str, payload: Path, errors: list[str], warnings: list[str]) -> None:
@@ -366,10 +453,13 @@ def main() -> int:
             where = "/".join(str(p) for p in failure.path) or "<root>"
             errors.append(f"schema: {where}: {failure.message}")
 
+    lang_ids = known_lang_ids()
     seen: dict[str, int] = {}
     for index, entry in enumerate(manifest.get("addons", [])):
         ident = entry.get("id", f"<entry {index}>")
 
+        if "@" in ident:
+            errors.append(f"{ident}: '@' is reserved for localized install keys — the app refuses the entry")
         if ident in seen:
             errors.append(f"{ident}: duplicate id (also entry {seen[ident]})")
         seen[ident] = index
@@ -385,28 +475,7 @@ def main() -> int:
             warnings.append(f"{ident}: type {kind} usually ends in {expected} — got {path}")
 
         if payload is not None:
-            declared_size = entry.get("sizeBytes")
-            actual_size = payload.stat().st_size
-            if declared_size is not None and declared_size != actual_size:
-                errors.append(
-                    f"{ident}: sizeBytes says {declared_size}, file is {actual_size}"
-                )
-
-            declared_hash = entry.get("sha256")
-            if declared_hash is not None:
-                actual_hash = sha256_of(payload)
-                if declared_hash != actual_hash:
-                    errors.append(
-                        f"{ident}: sha256 mismatch\n"
-                        f"    declared {declared_hash}\n"
-                        f"    actual   {actual_hash}"
-                    )
-
-            if declared_hash is None and declared_size is None:
-                warnings.append(
-                    f"{ident}: no sha256/sizeBytes — valid, but the app will show it "
-                    f"as unverified (run tools/build_index.py to fill them in)"
-                )
+            check_payload_checksums(ident, payload, entry, errors, warnings)
 
             if kind == "icon_pack":
                 check_icon_pack(ident, payload, errors, warnings)
@@ -437,6 +506,8 @@ def main() -> int:
 
         if kind in ("dictionary", "vocabulary") and not entry.get("langId"):
             errors.append(f"{ident}: dictionaries must declare a langId")
+
+        check_localizations(ident, entry, lang_ids, errors, warnings)
 
         # Not required, but an addon whose licence nobody can find is one
         # nobody can safely reuse — and for a font or an icon set that is the

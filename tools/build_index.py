@@ -51,7 +51,11 @@ FIELD_ORDER = [
     "licenseText",
     "licenseFile",
     "requires",
+    "localizations",
 ]
+
+# The order each localizations[] item is written back in.
+LOCALIZATION_FIELD_ORDER = ["locale", "name", "description", "version", "path", "sha256", "sizeBytes"]
 
 # Where each type's payloads conventionally live, used only to spot files that
 # exist but were never indexed. The manifest's `path` is what actually locates a
@@ -78,11 +82,53 @@ def sha256_of(path: Path) -> str:
     return digest.hexdigest()
 
 
-def ordered(entry: dict) -> dict:
+def ordered(entry: dict, order: list[str] = FIELD_ORDER) -> dict:
     """Reorder an entry's keys, keeping unknown ones at the end."""
-    known = [k for k in FIELD_ORDER if k in entry]
-    extra = [k for k in entry if k not in FIELD_ORDER]
-    return {k: entry[k] for k in known + extra}
+    known = [k for k in order if k in entry]
+    extra = [k for k in entry if k not in order]
+    result = {k: entry[k] for k in known + extra}
+    if isinstance(result.get("localizations"), list):
+        result["localizations"] = [
+            ordered(item, LOCALIZATION_FIELD_ORDER) if isinstance(item, dict) else item
+            for item in result["localizations"]
+        ]
+    return result
+
+
+def refresh(ident: str, holder: dict, args, changes: list[str], problems: list[str], indexed: set) -> None:
+    """Recompute sha256/sizeBytes for one payload — an entry's or a localization's."""
+    path = holder.get("path", "")
+    if not path:
+        problems.append(f"{ident}: no path")
+        return
+
+    if is_remote(path):
+        # Absolute URLs point off-repo; we can't hash what we don't have.
+        if not args.drop_checksums and "sha256" not in holder:
+            print(f"note: {ident}: absolute URL, checksum left to the publisher")
+        return
+
+    payload = ROOT / path
+    if not payload.is_file():
+        problems.append(f"{ident}: path does not exist — {path}")
+        return
+    indexed.add(payload.resolve())
+
+    if args.drop_checksums:
+        for field in ("sha256", "sizeBytes"):
+            if holder.pop(field, None) is not None:
+                changes.append(f"{ident}: dropped {field}")
+        return
+
+    size = payload.stat().st_size
+    digest = sha256_of(payload)
+
+    if holder.get("sizeBytes") != size:
+        changes.append(f"{ident}: sizeBytes {holder.get('sizeBytes')} -> {size}")
+        holder["sizeBytes"] = size
+    if holder.get("sha256") != digest:
+        changes.append(f"{ident}: sha256 {str(holder.get('sha256'))[:12]}… -> {digest[:12]}…")
+        holder["sha256"] = digest
 
 
 def is_remote(path: str) -> bool:
@@ -116,39 +162,9 @@ def main() -> int:
 
     for entry in addons:
         ident = entry.get("id", "<no id>")
-        path = entry.get("path", "")
-
-        if not path:
-            problems.append(f"{ident}: no path")
-            continue
-
-        if is_remote(path):
-            # Absolute URLs point off-repo; we can't hash what we don't have.
-            if not args.drop_checksums and "sha256" not in entry:
-                print(f"note: {ident}: absolute URL, checksum left to the publisher")
-            continue
-
-        payload = ROOT / path
-        if not payload.is_file():
-            problems.append(f"{ident}: path does not exist — {path}")
-            continue
-        indexed.add(payload.resolve())
-
-        if args.drop_checksums:
-            for field in ("sha256", "sizeBytes"):
-                if entry.pop(field, None) is not None:
-                    changes.append(f"{ident}: dropped {field}")
-            continue
-
-        size = payload.stat().st_size
-        digest = sha256_of(payload)
-
-        if entry.get("sizeBytes") != size:
-            changes.append(f"{ident}: sizeBytes {entry.get('sizeBytes')} -> {size}")
-            entry["sizeBytes"] = size
-        if entry.get("sha256") != digest:
-            changes.append(f"{ident}: sha256 {str(entry.get('sha256'))[:12]}… -> {digest[:12]}…")
-            entry["sha256"] = digest
+        refresh(ident, entry, args, changes, problems, indexed)
+        for item in entry.get("localizations", []):
+            refresh(f"{ident}@{item.get('locale', '?')}", item, args, changes, problems, indexed)
 
         for preview in entry.get("previews", []):
             if not is_remote(preview) and not (ROOT / preview).is_file():

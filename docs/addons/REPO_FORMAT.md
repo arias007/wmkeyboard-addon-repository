@@ -107,6 +107,7 @@ Unknown fields are ignored, so future versions can add fields without breaking o
 | `license` | | Licence identifier — SPDX where one fits (`MIT`, `OFL-1.1`, `CC0-1.0`, `CC-BY-4.0`), otherwise any short name. Shown on the addon's page. |
 | `licenseText` | | Full licence text, inline. |
 | `licenseFile` | | Licence text as a file, relative or absolute; fetched when the user opens it. |
+| `localizations` | | The same `dictionary`, `emoji_keywords` or `vocabulary` addon in other languages, one payload each. See [Localized addons](#localized-addons). Ignored for every other type. |
 | `requires` | | Ids of other entries **in this same manifest** the addon was designed with — a theme naming its font and sound. Soft: the install screen offers to download them together, and skipping them still installs a working addon that falls back to the user's global choices. Unresolvable ids are ignored. |
 
 ### Licensing
@@ -150,6 +151,55 @@ and what every font published before this field existed gets.
 
 Dictionaries and vocabulary packs use the singular `langId` instead, and must: a word
 list has exactly one language. `langIds` is ignored for them.
+
+### Localized addons
+
+One idea often needs a word list per language. A medical dictionary in English,
+Spanish and Brazilian Portuguese is still one medical dictionary, so publish it
+as one entry rather than three cards that repeat every field. The entry's own
+`path` and `langId` are the base list. Each item in `localizations` adds another:
+
+```json
+{
+  "id": "medical",
+  "type": "dictionary",
+  "name": "Medical & Clinical Dictionary",
+  "version": "1.0.0",
+  "path": "dictionaries/medical/en.txt",
+  "langId": "en",
+  "license": "CC0-1.0",
+  "localizations": [
+    { "locale": "es", "path": "dictionaries/medical/es.txt", "name": "Diccionario médico" },
+    { "locale": "es-419", "path": "dictionaries/medical/es-419.txt", "sha256": "…", "sizeBytes": 14210 },
+    { "locale": "pt-BR", "path": "dictionaries/medical/pt-BR.txt", "version": "1.1.0" }
+  ]
+}
+```
+
+| Field | Req | Notes |
+|---|---|---|
+| `locale` | ✔ | A registered language id (§5), optionally followed by a hyphen and a region: `es`, `es-419`, `pt-BR`. The language picks the folder the list installs into. The region only tells two lists for one language apart. |
+| `path` | ✔ | This language's payload, resolved like the entry's own `path`. |
+| `sha256`, `sizeBytes` | | As on the entry, for this payload. `tools/build_index.py` fills them in. |
+| `name`, `description` | | Shown in place of the entry's own, for this language. |
+| `version` | | Semver for this language alone, so one translation can be updated without the others. Defaults to the entry's `version`. |
+
+Everything else (type, author, licence, tags, previews, `requires`) is the
+entry's. A localization with no `path`, a malformed `locale`, the same `locale`
+twice, or the base `langId` again is dropped, and the rest of the addon still
+loads. `tools/validate.py` reports each of those as an error, and checks the
+language part of `locale` against [`tools/lang_ids.txt`](../../tools/lang_ids.txt).
+
+The app shows one card. On the addon's page, each language is a row with its own
+install, update and uninstall, and each is tracked under its own install key,
+`<repoId>/<id>@<locale>`. The download arrow on the card installs one list for
+every keyboard language the user has turned on. Within a language it picks the
+phone's region, then `-419` for a phone set to a Latin American country, then the
+list with no region. A user who types none of the addon's languages gets the base
+list. An older app ignores `localizations` and offers the base list alone.
+
+Because the install key of the base list is `<repoId>/<id>`, keep an existing
+entry's `id` when adding languages to it. Renaming it orphans every install.
 
 ## 4. Path & URL resolution (hybrid model)
 

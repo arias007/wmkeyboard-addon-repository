@@ -69,6 +69,48 @@
         }
       }
     },
+    "localization": {
+      "type": "object",
+      "required": [
+        "locale",
+        "path"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "locale": {
+          "type": "string",
+          "description": "A registered language id, optionally followed by a hyphen and a region: es, es-419, pt-BR. The language picks the folder the list installs into; the region only tells two lists for one language apart. Must differ from the entry's own langId.",
+          "pattern": "^[a-z]{2,3}(_[a-z0-9]+)*(-[A-Za-z0-9]{2,8})?$"
+        },
+        "path": {
+          "type": "string",
+          "description": "This language's payload, resolved like the entry's own path."
+        },
+        "sha256": {
+          "type": "string",
+          "description": "Optional lowercase hex SHA-256 of this language's payload.",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Optional size of this language's payload."
+        },
+        "name": {
+          "type": "string",
+          "description": "Shown in place of the entry's name for this language."
+        },
+        "description": {
+          "type": "string",
+          "description": "Shown in place of the entry's description for this language."
+        },
+        "version": {
+          "type": "string",
+          "description": "Semver for this language alone, so one translation can be updated without the others. Defaults to the entry's version.",
+          "pattern": "^\\d+\\.\\d+\\.\\d+(?:[-+].+)?$"
+        }
+      }
+    },
     "addon": {
       "type": "object",
       "required": [
@@ -171,6 +213,13 @@
         "licenseFile": {
           "type": "string",
           "description": "Licence text as a file: a path relative to this manifest, or an absolute https URL. Fetched on demand when the user opens the licence."
+        },
+        "localizations": {
+          "type": "array",
+          "description": "The same dictionary, emoji_keywords or vocabulary addon in other languages, one payload each. The entry's own path and langId are the base list. Each item installs as its own variant under <repoId>/<id>@<locale>. Ignored for every other type, and by app versions that predate it.",
+          "items": {
+            "$ref": "#/$defs/localization"
+          }
         },
         "requires": {
           "type": "array",

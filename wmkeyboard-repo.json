@@ -412,7 +412,16 @@
         "previews/en-medical.png"
       ],
       "langId": "en",
-      "license": "CC0-1.0"
+      "license": "CC0-1.0",
+      "localizations": [
+        {
+          "locale": "es-419",
+          "name": "Diccionario médico y clínico",
+          "path": "dictionaries/es-419-medical.txt",
+          "sha256": "4e7af68a3aea26643ee5a00a0e58e3a43c80bedd37df91b8d898f17c2440bb50",
+          "sizeBytes": 30374
+        }
+      ]
     },
     {
       "id": "en-legal",
