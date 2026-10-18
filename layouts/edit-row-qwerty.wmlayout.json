@@ -1,0 +1,309 @@
+{
+  "format": "wmkeyboard-layout",
+  "version": 1,
+  "layout": {
+    "id": "edit_row_qwerty_en",
+    "name": "QWERTY with flick edit row",
+    "langId": "en",
+    "version": 2,
+    "layers": {
+      "letters": {
+        "rows": [
+          [
+            {
+              "label": "1",
+              "width": 2.0,
+              "flick": {
+                "left": "2",
+                "up": "3",
+                "right": "4",
+                "down": "5"
+              }
+            },
+            {
+              "label": "Copy",
+              "icon": "copy",
+              "width": 2.0,
+              "action": {
+                "type": "edit",
+                "op": "COPY"
+              },
+              "flickActions": {
+                "left": {
+                  "action": {
+                    "type": "edit",
+                    "op": "WORD_LEFT"
+                  },
+                  "label": ""
+                },
+                "right": {
+                  "action": {
+                    "type": "edit",
+                    "op": "WORD_RIGHT"
+                  },
+                  "label": ""
+                },
+                "up": {
+                  "action": {
+                    "type": "edit",
+                    "op": "SELECT_ALL"
+                  },
+                  "label": ""
+                },
+                "down": {
+                  "action": {
+                    "type": "edit",
+                    "op": "PASTE"
+                  },
+                  "label": ""
+                }
+              }
+            },
+            {
+              "label": "Select",
+              "width": 2.0,
+              "action": {
+                "type": "edit",
+                "op": "SELECT"
+              },
+              "flickActions": {
+                "left": {
+                  "action": {
+                    "type": "edit",
+                    "op": "LEFT"
+                  },
+                  "label": ""
+                },
+                "right": {
+                  "action": {
+                    "type": "edit",
+                    "op": "RIGHT"
+                  },
+                  "label": ""
+                },
+                "up": {
+                  "action": {
+                    "type": "edit",
+                    "op": "UP"
+                  },
+                  "label": ""
+                },
+                "down": {
+                  "action": {
+                    "type": "edit",
+                    "op": "DOWN"
+                  },
+                  "label": ""
+                }
+              }
+            },
+            {
+              "label": "Cut",
+              "icon": "cut",
+              "width": 2.0,
+              "action": {
+                "type": "edit",
+                "op": "CUT"
+              },
+              "flickActions": {
+                "left": {
+                  "action": {
+                    "type": "edit",
+                    "op": "BACKSPACE"
+                  },
+                  "label": ""
+                },
+                "right": {
+                  "action": {
+                    "type": "edit",
+                    "op": "FORWARD_DELETE"
+                  },
+                  "label": ""
+                },
+                "up": {
+                  "action": {
+                    "type": "edit",
+                    "op": "SELECT_WORD"
+                  },
+                  "label": ""
+                },
+                "down": {
+                  "action": {
+                    "type": "edit",
+                    "op": "SELECT_LINE"
+                  },
+                  "label": ""
+                }
+              }
+            },
+            {
+              "label": "6",
+              "width": 2.0,
+              "flick": {
+                "left": "7",
+                "up": "8",
+                "right": "9",
+                "down": "0"
+              }
+            }
+          ],
+          [
+            {
+              "label": "q"
+            },
+            {
+              "label": "w"
+            },
+            {
+              "label": "e"
+            },
+            {
+              "label": "r"
+            },
+            {
+              "label": "t"
+            },
+            {
+              "label": "y"
+            },
+            {
+              "label": "u"
+            },
+            {
+              "label": "i"
+            },
+            {
+              "label": "o"
+            },
+            {
+              "label": "p"
+            }
+          ],
+          [
+            {
+              "label": "a"
+            },
+            {
+              "label": "s"
+            },
+            {
+              "label": "d"
+            },
+            {
+              "label": "f"
+            },
+            {
+              "label": "g"
+            },
+            {
+              "label": "h"
+            },
+            {
+              "label": "j"
+            },
+            {
+              "label": "k"
+            },
+            {
+              "label": "l"
+            }
+          ],
+          [
+            {
+              "label": "⇧",
+              "action": {
+                "type": "shift"
+              },
+              "width": 1.5
+            },
+            {
+              "label": "z"
+            },
+            {
+              "label": "x"
+            },
+            {
+              "label": "c"
+            },
+            {
+              "label": "v"
+            },
+            {
+              "label": "b"
+            },
+            {
+              "label": "n"
+            },
+            {
+              "label": "m"
+            },
+            {
+              "label": "⌫",
+              "action": {
+                "type": "delete"
+              },
+              "width": 1.5
+            }
+          ],
+          [
+            {
+              "label": "?123",
+              "action": {
+                "type": "symbols"
+              },
+              "width": 1.5
+            },
+            {
+              "label": "😊",
+              "icon": "emoji",
+              "action": {
+                "type": "emoji"
+              }
+            },
+            {
+              "label": ",",
+              "role": "Comma",
+              "longPress": [
+                ";",
+                ":",
+                "'",
+                "\""
+              ]
+            },
+            {
+              "label": " ",
+              "action": {
+                "type": "space"
+              },
+              "width": 4
+            },
+            {
+              "label": ".",
+              "role": "Period",
+              "longPress": [
+                "?",
+                "!",
+                "-",
+                "…"
+              ]
+            },
+            {
+              "label": "⏎",
+              "action": {
+                "type": "enter"
+              },
+              "width": 1.5
+            }
+          ]
+        ],
+        "rowHeights": [
+          1.15,
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    }
+  }
+}

@@ -101,6 +101,16 @@ def draw_toolbar_icons(draw: ImageDraw.ImageDraw, top_x: int, top_y: int, kb_w: 
     draw.arc([cx4 - 5, cy - 5, cx4 + 5, cy + 5], start=35, end=145, fill=icon_color, width=2)
 
 
+# What the preview writes for an edit-op flick arm the app draws as an icon.
+EDIT_OP_GLYPHS = {
+    "LEFT": "←", "RIGHT": "→", "UP": "↑", "DOWN": "↓",
+    "WORD_LEFT": "«", "WORD_RIGHT": "»",
+    "SELECT_ALL": "all", "SELECT_WORD": "word", "SELECT_LINE": "line",
+    "COPY": "copy", "PASTE": "paste", "CUT": "cut",
+    "BACKSPACE": "del", "FORWARD_DELETE": "fwd",
+}
+
+
 def draw_globe_icon(draw: ImageDraw.ImageDraw, cx: float, cy: float, color: tuple):
     """Draw a vector globe icon on the language switch key."""
     draw.ellipse([cx - 9, cy - 9, cx + 9, cy + 9], outline=color, width=2)
@@ -222,6 +232,18 @@ def render_keyboard_mockup(
                 width=1,
             )
 
+            # 0. Flick arms, at the edge each one is flicked towards. Action
+            # arms draw a short word or arrow where the app draws an icon.
+            arms = dict(k.get("flick", {}))
+            for direction, arm in k.get("flickActions", {}).items():
+                op = arm.get("action", {}).get("op", "")
+                arms[direction] = arm.get("label") or EDIT_OP_GLYPHS.get(op, "•")
+            for direction, text in arms.items():
+                aw = draw.textlength(text, font=hint_font)
+                ax = {"left": curr_x + 10, "right": curr_x + kw - aw - 10}.get(direction, curr_x + (kw - aw) / 2)
+                ay = {"up": curr_y + 5, "down": curr_y + kh - 21}.get(direction, curr_y + (kh - 16) / 2)
+                draw.text((ax, ay), text, fill=(148, 163, 184), font=hint_font)
+
             # 1. Corner Hint (top-right of keycap)
             if hint and hint != label:
                 hw = draw.textlength(hint, font=hint_font)
@@ -256,6 +278,13 @@ def render_keyboard_mockup(
                     )
                 draw.ellipse([cx - r, cy - r, cx + r, cy + r], outline=text_color, width=4)
                 draw.ellipse([cx - 4, cy - 4, cx + 4, cy + 4], outline=text_color, width=2)
+            elif action == "emoji":
+                # Inter has no emoji, so draw the toolbar's smiley.
+                cx, cy = curr_x + kw / 2, curr_y + kh / 2
+                draw.ellipse([cx - 11, cy - 11, cx + 11, cy + 11], outline=text_color, width=2)
+                draw.ellipse([cx - 6, cy - 5, cx - 3, cy - 2], fill=text_color)
+                draw.ellipse([cx + 3, cy - 5, cx + 6, cy - 2], fill=text_color)
+                draw.arc([cx - 6, cy - 6, cx + 6, cy + 6], start=35, end=145, fill=text_color, width=2)
             elif action == "language_switch" or label == "🌐":
                 draw_globe_icon(draw, curr_x + kw / 2, curr_y + kh / 2, text_color)
             elif action == "space" or label == " ":
@@ -379,6 +408,18 @@ LAYOUT_CONFIGS = [
         "footer_text": "Fn springs back after one key • Tap Fn twice to keep it",
         "layer_key": "fn",
         "space_text": "English (Full PC)",
+    },
+    {
+        "layout_file": LAYOUTS_DIR / "edit-row-qwerty.wmlayout.json",
+        "output_grid": PREVIEWS_DIR / "edit-row-qwerty.jpg",
+        "title": "QWERTY with flick edit row",
+        "subtitle": "Digits, copy, select, cut and the caret on one row of flick keys",
+        "bg_start": (15, 23, 42),
+        "bg_end": (49, 46, 129),
+        "accent_color": (129, 140, 248),
+        "footer_text": "Flick 1 for 2 to 5 and 6 for 7 to 0 • Flick Select to move the caret • Copy and Cut flick to paste and delete",
+        "space_text": "English (QWERTY)",
+        "show_number_row": False,
     },
 ]
 

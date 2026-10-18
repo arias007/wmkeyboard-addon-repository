@@ -9,7 +9,7 @@
     "author": "Wasi Master",
     "homepage": "https://github.com/wasi-master/wmkeyboard-addon-repository",
     "icon": "icon.png",
-    "updatedAt": "2026-09-18"
+    "updatedAt": "2026-10-19"
   },
   "addons": [
     {
@@ -318,6 +318,31 @@
         "previews/full-pc-fn.jpg"
       ],
       "minAppVersion": 18,
+      "langId": "en",
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "edit-row-qwerty",
+      "type": "layout",
+      "name": "QWERTY with flick edit row",
+      "version": "1.0.0",
+      "author": "Wasi Master",
+      "description": "English QWERTY with a row of five flick keys on top. Tap 1 or 6, or flick them for 2 to 5 and 7 to 0. Tap Copy to copy, flick it up to select all, down to paste, or sideways to jump a word. Select turns on selection and its four flicks move the caret. Tap Cut to cut, flick it sideways to delete either way, up to select the word or down to select the line.",
+      "tags": [
+        "qwerty",
+        "flick",
+        "editing",
+        "clipboard",
+        "cursor",
+        "english"
+      ],
+      "path": "layouts/edit-row-qwerty.wmlayout.json",
+      "sha256": "a5099a4dc65814eae0b9b90a36da1eec91955fae7d1557de8926b1c944e7cf64",
+      "sizeBytes": 6984,
+      "previews": [
+        "previews/edit-row-qwerty.jpg"
+      ],
+      "minAppVersion": 31,
       "langId": "en",
       "license": "CC0-1.0"
     },
