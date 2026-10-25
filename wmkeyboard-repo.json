@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/wasi-master/wmkeyboard-addon-repository/main/docs/addons/wmkeyboard-repo.schema.json",
+  "$schema": "https://cdn.jsdelivr.net/gh/wasi-master/wmkeyboard-addon-repository@main/docs/addons/wmkeyboard-repo.schema.json",
   "format": "wmkeyboard-repo",
   "version": 1,
   "repo": {
@@ -1150,7 +1150,7 @@
         "english",
         "study"
       ],
-      "path": "https://raw.githubusercontent.com/wasi-master/wmkeyboard-data/HEAD/vocab/en/mg1000.wmvocab.json.gz",
+      "path": "https://cdn.jsdelivr.net/gh/wasi-master/wmkeyboard-data@master/vocab/en/mg1000.wmvocab.json.gz",
       "sha256": "c9d398665c9291ac301923e06c9a871ab4c5fd3ed2f1770717391eadff5d5fbd",
       "sizeBytes": 705666,
       "minAppVersion": 15,
